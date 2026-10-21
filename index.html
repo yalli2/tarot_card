@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>타로 카드 상징 탐험</title>
+<meta name="description" content="카드를 가운데 놓고, 테마를 눌러 카드 속 물건들의 의미를 살펴보는 타로 상징 학습 사이트">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14102b; --bg2:#1d1740; --panel:#221b4d; --panel2:#2b2360; --line:#443a85;
+  --ink:#f3eefc; --mute:#b4a9d9; --gold:#f2c867; --gold2:#ffe3a0; --rose:#ff8fb8;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:"Noto Sans KR",system-ui,sans-serif; color:var(--ink);
+  background:radial-gradient(1200px 700px at 50% -10%,#3a2c8a55,transparent),var(--bg);
+  min-height:100vh; line-height:1.6;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+header{padding:20px 16px 8px;text-align:center}
+header h1{margin:0;font-family:"Gowun Batang",serif;font-size:clamp(22px,4vw,34px);letter-spacing:.04em;color:var(--gold2)}
+header p{margin:4px 0 0;color:var(--mute);font-size:14px}
+.deck{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:10px 16px 0}
+.deck button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--mute)}
+.deck button.on{background:var(--gold);color:#2a1c00;border-color:var(--gold);font-weight:700}
+.strip{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;scroll-snap-type:x proximity;max-width:1200px;margin:0 auto;scrollbar-width:thin}
+.strip button{flex:0 0 auto;width:54px;padding:0;background:none;border:2px solid transparent;border-radius:8px;overflow:hidden;opacity:.7;scroll-snap-align:center}
+.strip button img{width:100%;display:block;border-radius:6px}
+.strip button.on{border-color:var(--gold);opacity:1;transform:translateY(-2px)}
+.strip button:hover{opacity:1}
+
+main{display:grid;grid-template-columns:230px minmax(280px,420px) 1fr;gap:22px;max-width:1200px;margin:0 auto;padding:6px 16px 40px;align-items:start}
+.themes{position:sticky;top:12px;display:flex;flex-direction:column;gap:8px}
+.themes h2,.info h2{margin:0 0 4px;font-size:13px;color:var(--mute);font-weight:500;letter-spacing:.08em}
+.chip{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;text-align:left;transition:.15s}
+.chip .ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:16px;background:var(--c);color:#161029;flex:0 0 auto}
+.chip .nm{font-weight:700;font-size:15px}
+.chip .ct{margin-left:auto;font-size:12px;color:var(--mute)}
+.chip:hover:not(:disabled){border-color:var(--c);transform:translateX(2px)}
+.chip.on{background:var(--panel2);border-color:var(--c);box-shadow:0 0 0 2px var(--c) inset}
+.chip:disabled{opacity:.3;cursor:not-allowed}
+
+.stage{text-align:center}
+.cardwrap{position:relative;width:100%;width:min(100%,400px,calc((100vh - 340px)*0.575));min-width:250px;margin:0 auto;aspect-ratio:560/974;border-radius:14px;box-shadow:0 20px 60px #0009,0 0 0 1px #ffffff22;overflow:hidden;background:#fff}
+.cardwrap img.main{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none}
+.dim{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;background:rgba(10,6,30,.62)}
+.dim.on{opacity:1}
+.pin{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;border:2px solid #fff;background:var(--c);color:#161029;font-weight:700;font-size:13px;display:grid;place-items:center;box-shadow:0 2px 8px #000a;padding:0;transition:transform .15s,opacity .2s;animation:pop .35s ease both}
+.pin:hover{transform:translate(-50%,-50%) scale(1.2);z-index:3}
+.pin.sel{transform:translate(-50%,-50%) scale(1.35);z-index:4;box-shadow:0 0 0 4px #fff8,0 0 22px 6px var(--c)}
+.pin.sel::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--c);animation:pulse 1.4s infinite}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(0)}to{transform:translate(-50%,-50%) scale(1)}}
+@keyframes pulse{from{transform:scale(.8);opacity:1}to{transform:scale(1.6);opacity:0}}
+.tip{position:absolute;z-index:6;pointer-events:none;background:#120c2ae6;border:1px solid var(--gold);color:var(--gold2);font-size:12px;padding:3px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-135%)}
+.nav{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px}
+.nav button{background:var(--panel);border:1px solid var(--line);border-radius:999px;width:42px;height:42px;font-size:18px}
+.nav button:hover{border-color:var(--gold)}
+.nav .ttl{min-width:160px}
+.nav .ttl b{display:block;font-family:"Gowun Batang",serif;font-size:20px;color:var(--gold2)}
+.nav .ttl small{color:var(--mute)}
+.hint{margin:10px 0 0;font-size:12.5px;color:var(--mute)}
+
+.info{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.kw{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px}
+.kw span{background:#ffffff14;border:1px solid #ffffff22;border-radius:999px;padding:2px 10px;font-size:12.5px;color:var(--gold2)}
+.sum{margin:0 0 14px;color:var(--mute);font-size:14.5px}
+.detail{border-radius:14px;padding:14px 16px;background:linear-gradient(135deg,var(--panel2),#33297a);border:1px solid var(--c,var(--line));min-height:104px;margin-bottom:14px}
+.detail .tag{display:inline-block;font-size:12px;font-weight:700;background:var(--c,var(--gold));color:#161029;border-radius:999px;padding:1px 10px;margin-bottom:6px}
+.detail h3{margin:0 0 4px;font-size:19px;font-family:"Gowun Batang",serif}
+.detail p{margin:0;font-size:15.5px}
+.detail.empty{color:var(--mute);display:grid;place-items:center;text-align:center;border-style:dashed}
+.list{display:flex;flex-direction:column;gap:6px;max-height:380px;overflow:auto;padding-right:2px}
+.item{display:flex;align-items:center;gap:10px;background:#ffffff0d;border:1px solid transparent;border-radius:10px;padding:8px 10px;text-align:left}
+.item .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#161029;font-weight:700;font-size:12px;flex:0 0 auto}
+.item:hover{border-color:var(--c)}
+.item.on{background:#ffffff1f;border-color:var(--c)}
+.item .t{font-size:11.5px;color:var(--mute);margin-left:auto}
+.foot{max-width:1200px;margin:0 auto;padding:0 16px 40px;color:var(--mute);font-size:12px;text-align:center}
+
+@media (max-width:980px){
+  main{grid-template-columns:1fr;gap:16px}
+  .themes{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px;gap:8px;scrollbar-width:thin}
+  .themes h2{display:none}
+  .chip{flex:0 0 auto;padding:7px 10px}
+  .chip .ct{margin-left:4px}
+  .chip .ico{width:26px;height:26px;font-size:14px}
+  .cardwrap{width:min(100%,400px)}
+  .list{max-height:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>✦ 타로 카드 상징 탐험 ✦</h1>
+  <p>카드를 가운데 놓고, 왼쪽 <b>테마</b>를 눌러 카드 속 물건들의 의미를 찾아보세요</p>
+</header>
+<div class="deck" id="deck"></div>
+<div class="strip" id="strip" aria-label="카드 선택"></div>
+
+<main>
+  <aside class="themes" id="themes" aria-label="테마"></aside>
+
+  <section class="stage">
+    <div class="cardwrap" id="cardwrap">
+      <img class="main" id="cardimg" alt="">
+      <div class="dim" id="dim"></div>
+    </div>
+    <div class="nav">
+      <button id="prev" aria-label="이전 카드">‹</button>
+      <div class="ttl"><b id="ttlKo"></b><small id="ttlEn"></small></div>
+      <button id="next" aria-label="다음 카드">›</button>
+    </div>
+    <p class="hint">← → 키로 카드를 넘길 수 있어요. 카드 위 번호를 눌러도 의미가 열립니다.</p>
+  </section>
+
+  <section class="info">
+    <h2>카드 요약</h2>
+    <div class="kw" id="kw"></div>
+    <p class="sum" id="sum"></p>
+    <div class="detail empty" id="detail">왼쪽에서 테마를 고르거나<br>카드 위 번호를 눌러 보세요</div>
+    <h2 id="listTitle">이 카드의 물건들</h2>
+    <div class="list" id="list"></div>
+  </section>
+</main>
+<div class="foot">교재: The Big Book of Tarot Meanings (Sam Magdaleno) · 카드 이미지는 교재 수록 덱(Rider-Waite-Smith 계열)을 학습용으로 사용했습니다.</div>
+
+<script src="data.js"></script>
+<script>
+const THEMES={
+  "소지품":{ico:"🪄",c:"#f2c867",d:"손에 든 도구·그릇·무기"},
+  "의복":{ico:"👘",c:"#ff8fb8",d:"옷·장신구·갑옷"},
+  "자연":{ico:"⛰️",c:"#7fd6ff",d:"하늘·물·산·날씨"},
+  "자세":{ico:"🤲",c:"#c7a6ff",d:"몸짓·표정·시선"},
+  "기호":{ico:"✦",c:"#ffb15c",d:"문양·숫자·상징 도형"},
+  "인물":{ico:"🧑",c:"#9ff0c0",d:"등장하는 사람들"},
+  "장소":{ico:"🏰",c:"#ff9d8a",d:"건물·길·공간"},
+  "동물":{ico:"🐾",c:"#ffe27a",d:"카드 속 동물"},
+  "식물":{ico:"🌹",c:"#8ee06f",d:"꽃·나무·열매"},
+  "색":{ico:"🎨",c:"#e58cff",d:"색이 주는 의미"}
+};
+const GROUPS=[
+  {k:"all",n:"전체",r:[0,77]},{k:"major",n:"메이저 아르카나",r:[0,21]},
+  {k:"cups",n:"컵",r:[22,35]},{k:"wands",n:"완즈",r:[36,49]},
+  {k:"swords",n:"소드",r:[50,63]},{k:"pent",n:"펜타클",r:[64,77]}
+];
+const $=id=>document.getElementById(id);
+let cur=0, theme=null, selIdx=null, group="all";
+
+function pad(n){return String(n).padStart(2,"0")}
+
+/* ---------- 덱 / 스트립 ---------- */
+function buildDeck(){
+  const d=$("deck"); d.innerHTML="";
+  GROUPS.forEach(g=>{
+    const b=document.createElement("button"); b.textContent=g.n;
+    b.className=g.k===group?"on":""; b.onclick=()=>{group=g.k;buildDeck();buildStrip();
+      const [a,z]=g.r; if(cur<a||cur>z) go(a);};
+    d.appendChild(b);
+  });
+}
+function buildStrip(){
+  const s=$("strip"); s.innerHTML="";
+  const g=GROUPS.find(x=>x.k===group), [a,z]=g.r;
+  for(let i=a;i<=z;i++){
+    const b=document.createElement("button");
+    b.title=CARDS[i].ko; b.dataset.i=i;
+    b.innerHTML=`<img loading="lazy" src="cards/t/${pad(i)}.jpg" alt="${CARDS[i].ko}">`;
+    b.onclick=()=>go(i); s.appendChild(b);
+  }
+  markStrip();
+}
+function markStrip(){
+  [...$("strip").children].forEach(b=>{
+    const on=+b.dataset.i===cur; b.classList.toggle("on",on);
+    if(on) b.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"});
+  });
+}
+
+/* ---------- 카드 이동 ---------- */
+function go(i){
+  cur=(i+CARDS.length)%CARDS.length; selIdx=null;
+  const c=CARDS[cur];
+  // 카드에 없는 테마는 해제
+  if(theme && !c.s.some(s=>s[1]===theme)) theme=null;
+  const img=$("cardimg"); img.src=`cards/${pad(cur)}.jpg`; img.alt=`${c.ko} (${c.en})`;
+  $("ttlKo").textContent=c.ko; $("ttlEn").textContent=c.en;
+  $("kw").innerHTML=c.kw.map(k=>`<span>${k}</span>`).join("");
+  $("sum").textContent=c.sum;
+  history.replaceState(null,"","#"+cur);
+  markStrip(); render();
+}
+
+/* ---------- 렌더 ---------- */
+function visible(){
+  const c=CARDS[cur];
+  return c.s.map((s,i)=>({s,i})).filter(o=>!theme||o.s[1]===theme);
+}
+function render(){
+  const c=CARDS[cur];
+  // 테마 칩
+  const box=$("themes"); box.innerHTML='<h2>테마 선택</h2>';
+  const all=document.createElement("button");
+  all.className="chip"+(theme===null?" on":""); all.style.setProperty("--c","#ffffff");
+  all.innerHTML=`<span class="ico">∗</span><span class="nm">전체 보기</span><span class="ct">${c.s.length}</span>`;
+  all.onclick=()=>{theme=null;selIdx=null;render()}; box.appendChild(all);
+  Object.keys(THEMES).forEach(t=>{
+    const n=c.s.filter(s=>s[1]===t).length;
+    const b=document.createElement("button");
+    b.className="chip"+(theme===t?" on":""); b.disabled=!n;
+    b.style.setProperty("--c",THEMES[t].c); b.title=THEMES[t].d;
+    b.innerHTML=`<span class="ico">${THEMES[t].ico}</span><span class="nm">${t}</span><span class="ct">${n}</span>`;
+    b.onclick=()=>{theme=(theme===t?null:t);selIdx=null;render()};
+    box.appendChild(b);
+  });
+  // 핀
+  const wrap=$("cardwrap"); wrap.querySelectorAll(".pin,.tip").forEach(e=>e.remove());
+  const vis=visible();
+  vis.forEach((o,n)=>{
+    const [name,th,x,y]=o.s, col=THEMES[th].c;
+    const p=document.createElement("button");
+    p.className="pin"+(selIdx===o.i?" sel":""); p.textContent=n+1;
+    p.style.cssText=`left:${x}%;top:${y}%;--c:${col};animation-delay:${n*25}ms`;
+    p.setAttribute("aria-label",name);
+    p.onmouseenter=()=>tip(name,x,y); p.onmouseleave=untip;
+    p.onfocus=()=>tip(name,x,y); p.onblur=untip;
+    p.onclick=()=>select(o.i);
+    wrap.appendChild(p);
+  });
+  // 어둡게 + 스포트라이트
+  const dim=$("dim");
+  if(selIdx!==null){
+    const [, , x,y]=c.s[selIdx];
+    dim.style.background=`radial-gradient(circle at ${x}% ${y}%,transparent 0,transparent 9%,rgba(10,6,30,.68) 22%)`;
+    dim.classList.add("on");
+  } else dim.classList.remove("on");
+  // 리스트
+  $("listTitle").textContent=theme?`${THEMES[theme].ico} ${theme} — ${THEMES[theme].d}`:"이 카드의 물건들";
+  const list=$("list"); list.innerHTML="";
+  vis.forEach((o,n)=>{
+    const b=document.createElement("button"); b.className="item"+(selIdx===o.i?" on":"");
+    b.style.setProperty("--c",THEMES[o.s[1]].c);
+    b.innerHTML=`<span class="n">${n+1}</span><span>${o.s[0]}</span><span class="t">${o.s[1]}</span>`;
+    b.onclick=()=>select(o.i); list.appendChild(b);
+  });
+  detail();
+}
+function detail(){
+  const d=$("detail"), c=CARDS[cur];
+  if(selIdx===null){
+    d.className="detail empty"; d.style.removeProperty("--c");
+    d.innerHTML=theme?`${THEMES[theme].ico} <b>${theme}</b> 테마의 물건 ${visible().length}개가 카드에 표시됐어요.<br>번호를 눌러 의미를 확인하세요.`
+                     :"왼쪽에서 테마를 고르거나<br>카드 위 번호를 눌러 보세요";
+    return;
+  }
+  const [name,th,,,txt]=c.s[selIdx];
+  d.className="detail"; d.style.setProperty("--c",THEMES[th].c);
+  d.innerHTML=`<span class="tag">${THEMES[th].ico} ${th}</span><h3>${name}</h3><p>${txt}</p>`;
+}
+function select(i){
+  selIdx=(selIdx===i?null:i);
+  // 선택한 물건의 테마로 자동 전환하지 않고 현재 필터 유지
+  render();
+  const it=document.querySelector(".item.on"); if(it) it.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function tip(name,x,y){
+  untip(); const t=document.createElement("div"); t.className="tip"; t.textContent=name;
+  t.style.left=Math.min(Math.max(x,18),82)+"%"; t.style.top=y+"%"; $("cardwrap").appendChild(t);
+}
+function untip(){$("cardwrap").querySelectorAll(".tip").forEach(e=>e.remove())}
+
+/* ---------- 이벤트 ---------- */
+$("prev").onclick=()=>go(cur-1); $("next").onclick=()=>go(cur+1);
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft") go(cur-1); else if(e.key==="ArrowRight") go(cur+1);
+  else if(e.key==="Escape"){selIdx=null;render()}
+});
+$("cardwrap").addEventListener("click",e=>{ if(!e.target.closest(".pin")&&selIdx!==null){selIdx=null;render()} });
+let sx=null;
+$("cardwrap").addEventListener("touchstart",e=>{sx=e.touches[0].clientX},{passive:true});
+$("cardwrap").addEventListener("touchend",e=>{
+  if(sx===null) return; const dx=e.changedTouches[0].clientX-sx; sx=null;
+  if(Math.abs(dx)>60) go(cur+(dx<0?1:-1));
+});
+
+buildDeck(); buildStrip();
+const h=parseInt(location.hash.slice(1)); go(Number.isInteger(h)&&h>=0&&h<78?h:0);
+</script>
+</body>
+</html>
